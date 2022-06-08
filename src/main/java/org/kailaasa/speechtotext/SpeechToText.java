@@ -2,26 +2,27 @@ package org.kailaasa.speechtotext;
 
 // Imports the Google Cloud client library
 import com.google.api.gax.longrunning.OperationFuture;
+import com.google.api.gax.paging.Page;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v1.LongRunningRecognizeMetadata;
 import com.google.cloud.speech.v1.LongRunningRecognizeResponse;
 import com.google.cloud.speech.v1.RecognitionAudio;
 import com.google.cloud.speech.v1.RecognitionConfig;
 import com.google.cloud.speech.v1.RecognitionConfig.AudioEncoding;
-import com.google.cloud.speech.v1.RecognizeResponse;
 import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
 import com.google.cloud.speech.v1.WordInfo;
-import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import com.google.protobuf.ByteString;
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -193,29 +194,42 @@ public class SpeechToText {
       }
     }
     
-    public static void deleteObject(String projectId, String bucketName, String objectName) {
-        // The ID of your GCP project
-        // String projectId = "your-project-id";
-
-        // The ID of your GCS bucket
-        // String bucketName = "your-unique-bucket-name";
-
-        // The ID of your GCS object
-        // String objectName = "your-object-name";
-
-        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
-        storage.delete(bucketName, objectName);
-
-        System.out.println("Object " + objectName + " was deleted from " + bucketName);
-      }
-
     public static void main(String... args) throws Exception {
-        asyncRecognizeWords("gs://speech-to-text-sharabheshwara-bucket1/Why does an Avatar or Incarnation happen_.flac");
-        deleteObject(
-            "speech-to-text",
-            "speech-to-text-sharabheshwara-bucket1",
-            "Why does an Avatar or Incarnation happen_.flac"
+        GoogleCredentials credentials = GoogleCredentials.fromStream(
+                new FileInputStream("speech-to-text-352619-e6ac4e047752.json")
+        ).createScoped(
+                Arrays.asList("https://www.googleapis.com/auth/cloud-platform")
         );
+        
+        Storage storage = StorageOptions
+            .newBuilder()
+            .setProjectId("speech-to-text")
+            .setCredentials(credentials)
+            .build()
+            .getService()
+        ;
+        Page<Blob> blobs = storage.list("speech-to-text-sharabheshwara-bucket1");
+        
+        for (Blob blob : blobs.iterateAll()) {
+            String blobName = blob.getName();
+            if (Files.exists(Paths.get("./subtitles/" + blobName + ".srt"))) {
+                continue;
+            }
+            
+            asyncRecognizeWords(
+                "gs://speech-to-text-sharabheshwara-bucket1/" + blobName
+            );
+            
+            storage.delete("speech-to-text-sharabheshwara-bucket1", blobName);
+
+            System.out.println(
+                "Object " +
+                blob.getName() +
+                " was deleted from " +
+                "speech-to-text-sharabheshwara-bucket1"
+            );
+            
+        }
     }
 }
         
