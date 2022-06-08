@@ -12,6 +12,9 @@ import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
 import com.google.cloud.speech.v1.WordInfo;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.protobuf.ByteString;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -76,7 +79,7 @@ public class SpeechToText {
 
             String[] resultSplit = gcsUri.split("/");
 
-
+            
             try(FileWriter fw = new FileWriter("./subtitles/" + resultSplit[3] + ".srt", true);
                 BufferedWriter bw = new BufferedWriter(fw);
                 PrintWriter out = new PrintWriter(bw)
@@ -185,11 +188,34 @@ public class SpeechToText {
                 }
             }
         }
+        
+        
       }
     }
+    
+    public static void deleteObject(String projectId, String bucketName, String objectName) {
+        // The ID of your GCP project
+        // String projectId = "your-project-id";
+
+        // The ID of your GCS bucket
+        // String bucketName = "your-unique-bucket-name";
+
+        // The ID of your GCS object
+        // String objectName = "your-object-name";
+
+        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
+        storage.delete(bucketName, objectName);
+
+        System.out.println("Object " + objectName + " was deleted from " + bucketName);
+      }
 
     public static void main(String... args) throws Exception {
         asyncRecognizeWords("gs://speech-to-text-sharabheshwara-bucket1/Why does an Avatar or Incarnation happen_.flac");
+        deleteObject(
+            "speech-to-text",
+            "speech-to-text-sharabheshwara-bucket1",
+            "Why does an Avatar or Incarnation happen_.flac"
+        );
     }
 }
         
