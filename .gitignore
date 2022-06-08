@@ -1,0 +1,4 @@
+videos/
+subtitles/
+speech-to-text*.json
+target/
