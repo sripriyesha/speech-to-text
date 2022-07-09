@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class UploadToGCloud {
+public class UploadToGCloudFlacForTranscripts {
     public static void uploadObject(
         Storage storage,
         String bucketName,
@@ -55,33 +55,12 @@ public class UploadToGCloud {
         });
         
         for (File file : directoryListing) {
-            if (Files.exists(Paths.get("./subtitles/" + file.getName() + ".srt"))) {
-                System.out.println(file.getName() + " subtitles already retrieved");
-                continue;
-            }
-            
-            boolean isAlreadyUploaded = false;
-            
-            Page<Blob> blobs = storage.list("speech-to-text-sharabheshwara-bucket1");
-            
-            for (Blob blob : blobs.iterateAll()) {
-                boolean fileAlreadyExists = file.getName().equals(blob.getName());
-                
-                if (fileAlreadyExists) {
-                    System.out.println(file.getName() + " already uploaded");
-                    isAlreadyUploaded = true;
-                    break;
-                }
-            }
-            
-            if (!isAlreadyUploaded) {
-                uploadObject(
-                    storage,
-                    "speech-to-text-sharabheshwara-bucket1",
-                    file.getName(),
-                    "./files/" + file.getName()
-                );
-            }
+            uploadObject(
+                storage,
+                "speech-to-text-sharabheshwara-bucket1",
+                file.getName(),
+                "./files/" + file.getName()
+            );
         }
     }
 }

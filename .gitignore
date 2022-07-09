@@ -1,4 +1,5 @@
 files/
 subtitles/
+transcripts/
 speech-to-text*.json
 target/
